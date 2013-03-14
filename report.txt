@@ -1,0 +1,47 @@
+/* ---------------------------------------------------------------------
+   report.txt: report for comp2310 assignment 2, 2012
+     Name: Ren Ding
+     Student Number: u5111810
+
+***Disclaimer***: (modify as appropriate)
+  The work that I am submitting for this program is without significant       
+  contributions from others (excepting course staff).
+*/
+
+--------------------------------------------------------------------- */
+   1. You should have noticed quickSocket() develop problems for large n, at least for a naive use of sockets. Determine the message size associated with this problem and record the value of n which bis (just) big enough to expose this. Given an explanation of what you think is the cause of this problem, fix it in your code, and describe the fix in the report.
+
+The value of n is , which bis (just) big enough to expose this problem.
+
+In recv(int sockfd, void *buf, size_t len, int flags) fourth param flags, using MSG_WAITALL instead of 0, because MSG_WAITALL This flag requests that the operation block until the full request is satisfied.
+
+replace
+nbytes = recv(sock_2, &A[pivotIndex+1], (n-pivotIndex-1)*sizeof(int), 0);
+with
+nbytes = recv(sock_2, &A[pivotIndex+1], (n-pivotIndex-1)*sizeof(int), MSG_WAITALL);
+
+
+   2. Time each sort with p=4 and n=8000000 (or thereabouts). Compare these times with those for p=1. For p=4 take say 5 trials and include the best one. Cut-and-paste your timings into report.txt (include the prompts and the commands used).
+
+      Which version is fastest (for p=4)? Explain whether this what you expect, given your knowledge of the underlying mechanisms used. The theoretical maximum speedup for the p=4 timings over the p=1 timing is 4. Are you observing close to this speedup? Explain why this might be the case (Hint:try doubling (or more) n; does the speedup improve significantly?)
+
+./quicksort -p 8000000 4
+sort array of length 8000000 via 4 processes using  pipes with seed 0 
+elapsed time for sort: 0.905730s
+
+./quicksort -s 8000000 4
+sort array of length 8000000 via 4 processes using  sockets with seed 0 
+elapsed time for sort: 0.910360s
+
+   3. One possible idea for improving the performance of quickThread() is that if the parent does not have to wait for the child to exit (call pthread_join()), the computation can be sped up. But the parent still has to wait for the child to finish the sort! Build into quickThread() the following variant code paths:
+          * wait_on_join: use pthread_join() to tell the parent that the child has finished (you have probably implemented this already). This is the default; it can is explicitly activated with the command line option -v 0 .
+          * wait_on_mutexlock: use (an array of) Pthread mutexes to tell the parent that the child has finished (i.e. the child unlocks a lock when finished, which the parent must acquire before it proceeds with the quick). This is activated when the option -v 1 is specified.
+          * wait_on_memlock: like the above but using a normal array (i.e. a value of 1 signifies the child is yet to finish; a value of 0 signifies it has finished and the parent may proceed). This is activated when when the option -v 2 is specified.
+            Hint: the array (pointer) should be a global variable declared as something like static volatile char *p_memlocks;. In quickThread(), use a call to malloc() to initialize the pointer. You should give careful thought as to when the array elements should be initialized (and similarly for wait_on_mutexlock). 
+
+   4. Briefly explain why the simpler wait_on_memlock scheme can be used safely in this situation. Also explain what the C keyword volatile means and why it is needed (try running the code without it!).
+
+   5. Time the three variants of quickThreads as per part 2, (except use a smaller n=8000) and record your results similarly. Which version is fastest, and did the idea work?
+
+   6. Time the three variants of quickThreads() as per part 5, except now use p=32, i.e. there are now many more threads than CPUs. Compare your results to the above, and note and try to explain any significant differences in the relative speeds. 
+
